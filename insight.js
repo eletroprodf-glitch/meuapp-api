@@ -1,77 +1,39 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
 export default async function handler(req, res) {
 
   if (req.method !== "POST") {
-
     return res.status(405).json({
-      error: "Metodo nao permitido",
+      error: "Método não permitido"
     });
-
   }
 
   try {
 
     const { prompt } = req.body;
 
-    const response = await fetch(
-
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyCOVQbTKUMZZndEfER_HKQjnz5IMS0SYZk",
-
-      {
-
-        method: "POST",
-
-        headers: {
-
-          "Content-Type": "application/json",
-
-        },
-
-        body: JSON.stringify({
-
-          contents: [
-
-            {
-
-              parts: [
-
-                {
-
-                  text: prompt,
-
-                },
-
-              ],
-
-            },
-
-          ],
-
-        }),
-
-      }
-
+    const genAI = new GoogleGenerativeAI(
+      process.env.GEMINI_API_KEY
     );
 
-    const data = await response.json();
-
-    const text =
-
-      data.candidates?.[0]?.content?.parts?.[0]?.text ||
-
-      "Sem resposta.";
-
-    res.status(200).json({
-
-      text,
-
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash"
     });
+
+    const result = await model.generateContent(prompt);
+
+    const response = await result.response;
+
+    const text = response.text();
+
+    res.status(200).json({ text });
 
   } catch (error) {
 
+    console.log(error);
+
     res.status(500).json({
-
-      error: "Erro servidor",
-
+      error: "Erro IA"
     });
 
   }

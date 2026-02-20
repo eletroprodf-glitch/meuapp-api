@@ -1,79 +1,63 @@
-export default async function handler(req, res) {
+export default async function handler(req,res){
 
-  if (req.method !== "POST") {
+res.setHeader("Access-Control-Allow-Origin","*");
+res.setHeader("Access-Control-Allow-Methods","POST,OPTIONS");
+res.setHeader("Access-Control-Allow-Headers","Content-Type");
 
-    return res.status(405).json({
-      error: "Metodo nao permitido",
-    });
+if(req.method==="OPTIONS"){
 
-  }
+return res.status(200).end();
 
-  try {
+}
 
-    const { prompt } = req.body;
+try{
 
-    const response = await fetch(
+const response = await fetch(
+"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key="+process.env.GEMINI_API_KEY,
+{
 
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyCOVQbTKUMZZndEfER_HKQjnz5IMS0SYZk",
+method:"POST",
 
-      {
+headers:{
+"Content-Type":"application/json"
+},
 
-        method: "POST",
+body:JSON.stringify({
 
-        headers: {
+contents:[{
 
-          "Content-Type": "application/json",
+parts:[{
 
-        },
+text:req.body.prompt
 
-        body: JSON.stringify({
+}]
 
-          contents: [
+}]
 
-            {
+})
 
-              parts: [
+}
 
-                {
+);
 
-                  text: prompt,
+const data = await response.json();
 
-                },
+const text =
+data?.candidates?.[0]?.content?.parts?.[0]?.text
+||"Sem resposta.";
 
-              ],
+res.status(200).json({text});
 
-            },
+}catch(e){
 
-          ],
+console.log(e);
 
-        }),
+res.status(500).json({
 
-      }
+error:"Erro IA"
 
-    );
+});
 
-    const data = await response.json();
-
-    const text =
-
-      data.candidates?.[0]?.content?.parts?.[0]?.text ||
-
-      "Sem resposta.";
-
-    res.status(200).json({
-
-      text,
-
-    });
-
-  } catch (error) {
-
-    res.status(500).json({
-
-      error: "Erro servidor",
-
-    });
-
-  }
+}
 
 }
